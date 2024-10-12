@@ -3,14 +3,13 @@ const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const port = 5000;
 
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
       "https://gadxtreme-906da.web.app",
       "https://gadxtreme.netlify.app",
     ],
@@ -98,8 +97,24 @@ async function run() {
       }
     });
 
+    app.post("/api/product", async (req, res) => {
+      const result = await gadgetsCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    app.get("/api/products", async (req, res) => {
+      const result = await gadgetsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/api/product/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await gadgetsCollection.findOne(query);
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. Successfully connected to MongoDB!");
+    // console.log("Pinged your deployment. Successfully connected to MongoDB!");
   } finally {
     // await client.close();
   }
