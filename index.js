@@ -62,40 +62,40 @@ async function run() {
     //   next();
     // };
 
-    app.post("/jwt", async (req, res) => {
-      try {
-        const userEmail = req?.body;
-        // console.log("user for token", userEmail);
-        const getToken = jwt.sign(userEmail, process.env.ACCESS_TOKEN, {
-          expiresIn: "5d",
-        });
-        res
-          .cookie("token", getToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-          })
-          .send({ success: true });
-      } catch (err) {
-        console.log(err);
-      }
-    });
+    // app.post("/jwt", async (req, res) => {
+    //   try {
+    //     const userEmail = req?.body;
+    //     // console.log("user for token", userEmail);
+    //     const getToken = jwt.sign(userEmail, process.env.ACCESS_TOKEN, {
+    //       expiresIn: "5d",
+    //     });
+    //     res
+    //       .cookie("token", getToken, {
+    //         httpOnly: true,
+    //         secure: process.env.NODE_ENV === "production",
+    //         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    //       })
+    //       .send({ success: true });
+    //   } catch (err) {
+    //     console.log(err);
+    //   }
+    // });
 
-    app.get("/logout", async (req, res) => {
-      try {
-        // const user = req.body;
-        // console.log(user);
-        res
-          .clearCookie("token", {
-            maxAge: 0,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-          })
-          .send({ success: true });
-      } catch (err) {
-        console.log(err);
-      }
-    });
+    // app.get("/logout", async (req, res) => {
+    //   try {
+    //     // const user = req.body;
+    //     // console.log(user);
+    //     res
+    //       .clearCookie("token", {
+    //         maxAge: 0,
+    //         secure: process.env.NODE_ENV === "production",
+    //         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    //       })
+    //       .send({ success: true });
+    //   } catch (err) {
+    //     console.log(err);
+    //   }
+    // });
 
     app.post("/api/product", async (req, res) => {
       const result = await gadgetsCollection.insertOne(req.body);
@@ -111,6 +111,33 @@ async function run() {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await gadgetsCollection.findOne(query);
       res.send(result);
+    });
+
+    app.put("/api/product/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          productName: req.body.productName,
+          price: req.body.price,
+          discountPrice: req.body.discountPrice,
+          images: req.body.images,
+          inStock: req.body.inStock,
+          category: req.body.category,
+          keyFeatures: req.body.keyFeatures,
+          description: req.body.description,
+        },
+      };
+      try {
+        const result = await gadgetsCollection.updateOne(
+          query,
+          updatedDoc,
+          options
+        );
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
