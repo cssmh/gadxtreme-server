@@ -140,6 +140,12 @@ async function run() {
       }
     });
 
+    app.delete("/api/product/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await gadgetsCollection.deleteOne(query);
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. Successfully connected to MongoDB!");
   } finally {
