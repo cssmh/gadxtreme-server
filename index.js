@@ -27,20 +27,20 @@ const client = new MongoClient(process.env.URI, {
   },
 });
 
-const isToken = async (req, res, next) => {
-  const token = req?.cookies?.token;
-  if (!token) {
-    return res.status(401).send({ message: "unauthorized access" });
-  }
-  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
-    if (err) {
-      res.status(401).send({ message: "unauthorized access" });
-    } else {
-      req.decodedUser = decoded;
-      next();
-    }
-  });
-};
+// const isToken = async (req, res, next) => {
+//   const token = req?.cookies?.token;
+//   if (!token) {
+//     return res.status(401).send({ message: "unauthorized access" });
+//   }
+//   jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+//     if (err) {
+//       res.status(401).send({ message: "unauthorized access" });
+//     } else {
+//       req.decodedUser = decoded;
+//       next();
+//     }
+//   });
+// };
 
 async function run() {
   try {
@@ -98,19 +98,45 @@ async function run() {
     // });
 
     app.post("/api/product", async (req, res) => {
-      const result = await gadgetsCollection.insertOne(req.body);
-      res.send(result);
+      try {
+        const result = await gadgetsCollection.insertOne(req.body);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     app.get("/api/products", async (req, res) => {
-      const result = await gadgetsCollection.find().toArray();
-      res.send(result);
+      try {
+        const result = await gadgetsCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/api/products/:category", async (req, res) => {
+      const cate = req.params.category;
+      let query = {};
+      if (cate) {
+        query = { category: { $regex: new RegExp(`^${cate}$`, "i") } };
+      }
+      try {
+        const result = await gadgetsCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     app.get("/api/product/:id", async (req, res) => {
-      const query = { _id: new ObjectId(req.params.id) };
-      const result = await gadgetsCollection.findOne(query);
-      res.send(result);
+      try {
+        const query = { _id: new ObjectId(req.params.id) };
+        const result = await gadgetsCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     app.put("/api/product/:id", async (req, res) => {
@@ -142,8 +168,12 @@ async function run() {
 
     app.delete("/api/product/:id", async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
-      const result = await gadgetsCollection.deleteOne(query);
-      res.send(result);
+      try {
+        const result = await gadgetsCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
