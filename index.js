@@ -10,6 +10,7 @@ const port = 5000;
 app.use(
   cors({
     origin: [
+      "http://localhost:5173",
       "https://gadxtreme-906da.web.app",
       "https://gadxtreme.netlify.app",
     ],
@@ -106,7 +107,7 @@ async function run() {
       }
     });
 
-    app.get("/api/products", async (req, res) => {
+    app.get("/api/all-products", async (req, res) => {
       try {
         const result = await gadgetsCollection.find().toArray();
         res.send(result);
@@ -117,15 +118,50 @@ async function run() {
 
     app.get("/api/products/:category", async (req, res) => {
       const cate = req.params.category;
+      console.log(cate);
       let query = {};
+
+      // Define category and subcategories conditions
       if (cate) {
-        query = { category: { $regex: new RegExp(`^${cate}$`, "i") } };
+        if (cate.toLowerCase() === "mobile accessories") {
+          // Include the category and all subcategories
+          query = {
+            category: {
+              $in: [
+                "Mobile Accessories",
+                "Charging Accessories",
+                "Converters & Hub",
+                "Powerbank",
+              ],
+            },
+          };
+        } else if (cate.toLowerCase() === "earphones & headphones") {
+          query = {
+            category: {
+              $in: [
+                "Earphones & Headphones",
+                "Wired Earphone",
+                "Headphones",
+                "Wireless Earphone",
+              ],
+            },
+          };
+        } else if (cate.toLowerCase() === "more") {
+          query = {
+            category: { $in: ["More", "Smart TV", "Laptops", "Others"] },
+          };
+        } else {
+          // For categories without subcategories or other categories
+          query = { category: { $regex: new RegExp(`^${cate}$`, "i") } };
+        }
       }
+
       try {
         const result = await gadgetsCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
+        res.status(500).send({ message: "Failed to fetch data" });
       }
     });
 
