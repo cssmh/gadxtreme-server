@@ -118,7 +118,9 @@ async function run() {
 
     app.get("/api/products/:category", async (req, res) => {
       const cate = req.params.category;
-      console.log(cate);
+      const page = parseInt(req.query?.page);
+      const limit = parseInt(req.query?.limit);
+      const skipIndex = (page - 1) * limit;
       let query = {};
 
       // Define category and subcategories conditions
@@ -157,11 +159,15 @@ async function run() {
       }
 
       try {
-        const result = await gadgetsCollection.find(query).toArray();
-        res.send(result);
+        const cursor = gadgetsCollection.find(query);
+
+        const getTotal = (await gadgetsCollection.countDocuments(query)) || 0;
+        const totalPages = Math.ceil(getTotal / limit) || 0;
+
+        const result = await cursor.skip(skipIndex).limit(limit).toArray();
+        res.send({ result, totalPages });
       } catch (error) {
         console.log(error);
-        res.status(500).send({ message: "Failed to fetch data" });
       }
     });
 
