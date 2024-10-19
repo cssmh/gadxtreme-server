@@ -107,6 +107,28 @@ async function run() {
       }
     });
 
+    app.get("/api/search-products", async (req, res) => {
+      try {
+        const searchTerm = req.query?.search;
+        if (!searchTerm || searchTerm.trim() === "") {
+          return res.status(400).json({ message: "Search term is required." });
+        }
+        const query = {
+          $or: [
+            {
+              productName: { $regex: searchTerm, $options: "i" },
+            },
+          ],
+        };
+
+        const result = await gadgetsCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "An error occurred while searching." });
+      }
+    });
+
     app.get("/api/all-products", async (req, res) => {
       try {
         const result = await gadgetsCollection.find().toArray();
@@ -118,15 +140,14 @@ async function run() {
 
     app.get("/api/products/:category", async (req, res) => {
       const cate = req.params.category;
-      const page = parseInt(req.query?.page);
-      const limit = parseInt(req.query?.limit);
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 6;
       const skipIndex = (page - 1) * limit;
       let query = {};
 
       // Define category and subcategories conditions
       if (cate) {
         if (cate.toLowerCase() === "mobile accessories") {
-          // Include the category and all subcategories
           query = {
             category: {
               $in: [
@@ -153,14 +174,12 @@ async function run() {
             category: { $in: ["More", "Smart TV", "Laptops", "Others"] },
           };
         } else {
-          // For categories without subcategories or other categories
           query = { category: { $regex: new RegExp(`^${cate}$`, "i") } };
         }
       }
 
       try {
         const cursor = gadgetsCollection.find(query);
-
         const getTotal = (await gadgetsCollection.countDocuments(query)) || 0;
         const totalPages = Math.ceil(getTotal / limit) || 0;
 
@@ -168,6 +187,7 @@ async function run() {
         res.send({ result, totalPages });
       } catch (error) {
         console.log(error);
+        res.status(500).send({ message: "Internal Server Error" });
       }
     });
 
@@ -219,7 +239,7 @@ async function run() {
     });
 
     await client.db("admin").command({ ping: 1 });
-    // console.log("Pinged your deployment. Successfully connected to MongoDB!");
+    console.log("Pinged your deployment. Successfully connected to MongoDB!");
   } finally {
     // await client.close();
   }
