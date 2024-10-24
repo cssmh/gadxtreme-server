@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
-const port = 5000;
+const port = 2000;
 
 app.use(
   cors({
@@ -47,6 +47,8 @@ async function run() {
   try {
     // await client.connect();
     const gadgetsCollection = client.db("gadXtreme").collection("gadgets");
+    const wishlistCollection = client.db("gadXtreme").collection("wishlist");
+    const cartCollection = client.db("gadXtreme").collection("cart");
 
     // const isAdmin = async (req, res, next) => {
     //   const email = req.decodedUser.email;
@@ -101,6 +103,58 @@ async function run() {
     app.post("/api/product", async (req, res) => {
       try {
         const result = await gadgetsCollection.insertOne(req.body);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.post("/api/cart", async (req, res) => {
+      try {
+        const result = await cartCollection.insertOne(req.body);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.put("/api/cart/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      try {
+        const options = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            quantity: req.body.quantity,
+          },
+        };
+        const result = await cartCollection.updateOne(
+          query,
+          updatedDoc,
+          options
+        );
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.delete("/api/cart/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      try {
+        const result = await cartCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/api/my-cart", async (req, res) => {
+      try {
+        let query = {};
+        if (req.query?.email) {
+          query = { author: req.query.email };
+        }
+        const result = await cartCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
