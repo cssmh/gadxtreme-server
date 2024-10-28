@@ -49,6 +49,7 @@ async function run() {
     const gadgetsCollection = client.db("gadXtreme").collection("gadgets");
     const wishlistCollection = client.db("gadXtreme").collection("wishlist");
     const cartCollection = client.db("gadXtreme").collection("cart");
+    const OrderCollection = client.db("gadXtreme").collection("orders");
     const couponCollection = client.db("gadXtreme").collection("coupon");
 
     const isAdmin = async (req, res, next) => {
@@ -96,9 +97,36 @@ async function run() {
       }
     });
 
+    app.post("/api/place-order", async (req, res) => {
+      try {
+        console.log(req.body);
+        const { email } = req.body;
+        const result = await OrderCollection.insertOne(req.body);
+        await cartCollection.deleteMany({ author: email });
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
     app.post("/api/product", async (req, res) => {
       try {
         const result = await gadgetsCollection.insertOne(req.body);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/api/popular-gadget", async (req, res) => {
+      try {
+        const skip = parseInt(req.query.skip) || 0;
+        const limit = parseInt(req.query.limit) || 8;
+        const result = await gadgetsCollection
+          .find()
+          .skip(skip)
+          .limit(limit)
+          .toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
@@ -144,13 +172,32 @@ async function run() {
       }
     });
 
-    app.get("/api/my-cart", async (req, res) => {
+    app.get("/api/my-cart", isToken, async (req, res) => {
+      if (req.decodedUser?.email !== req.query?.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
       try {
         let query = {};
         if (req.query?.email) {
           query = { author: req.query.email };
         }
         const result = await cartCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/api/my-orders", isToken, async (req, res) => {
+      if (req.decodedUser?.email !== req.query?.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      try {
+        let query = {};
+        if (req.query?.email) {
+          query = { email: req.query.email };
+        }
+        const result = await OrderCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
