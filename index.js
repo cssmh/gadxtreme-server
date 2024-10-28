@@ -28,20 +28,20 @@ const client = new MongoClient(process.env.URI, {
   },
 });
 
-// const isToken = async (req, res, next) => {
-//   const token = req?.cookies?.token;
-//   if (!token) {
-//     return res.status(401).send({ message: "unauthorized access" });
-//   }
-//   jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
-//     if (err) {
-//       res.status(401).send({ message: "unauthorized access" });
-//     } else {
-//       req.decodedUser = decoded;
-//       next();
-//     }
-//   });
-// };
+const isToken = async (req, res, next) => {
+  const token = req?.cookies?.token;
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      res.status(401).send({ message: "unauthorized access" });
+    } else {
+      req.decodedUser = decoded;
+      next();
+    }
+  });
+};
 
 async function run() {
   try {
@@ -49,56 +49,52 @@ async function run() {
     const gadgetsCollection = client.db("gadXtreme").collection("gadgets");
     const wishlistCollection = client.db("gadXtreme").collection("wishlist");
     const cartCollection = client.db("gadXtreme").collection("cart");
+    const couponCollection = client.db("gadXtreme").collection("coupon");
 
-    // const isAdmin = async (req, res, next) => {
-    //   const email = req.decodedUser.email;
-    //   const user = await userCollection.findOne({ email });
+    const isAdmin = async (req, res, next) => {
+      const email = req.decodedUser.email;
+      const user = await userCollection.findOne({ email });
 
-    //   if (email === demoAdmin) {
-    //     // Restrict the demo admin to read-only access
-    //     req.demoAdmin = true;
-    //     return next();
-    //   }
-    //   if (!user || user?.role !== "admin") {
-    //     return res.status(403).send({ message: "forbidden access" });
-    //   }
-    //   next();
-    // };
+      // if (email === demoAdmin) {
+      //   req.demoAdmin = true;
+      //   return next();
+      // }
+      if (!user || user?.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
 
-    // app.post("/jwt", async (req, res) => {
-    //   try {
-    //     const userEmail = req?.body;
-    //     // console.log("user for token", userEmail);
-    //     const getToken = jwt.sign(userEmail, process.env.ACCESS_TOKEN, {
-    //       expiresIn: "5d",
-    //     });
-    //     res
-    //       .cookie("token", getToken, {
-    //         httpOnly: true,
-    //         secure: process.env.NODE_ENV === "production",
-    //         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-    //       })
-    //       .send({ success: true });
-    //   } catch (err) {
-    //     console.log(err);
-    //   }
-    // });
+    app.post("/jwt", async (req, res) => {
+      try {
+        const getToken = jwt.sign(req?.body, process.env.ACCESS_TOKEN, {
+          expiresIn: "7d",
+        });
+        res
+          .cookie("token", getToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+          })
+          .send({ success: true });
+      } catch (err) {
+        console.log(err);
+      }
+    });
 
-    // app.get("/logout", async (req, res) => {
-    //   try {
-    //     // const user = req.body;
-    //     // console.log(user);
-    //     res
-    //       .clearCookie("token", {
-    //         maxAge: 0,
-    //         secure: process.env.NODE_ENV === "production",
-    //         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-    //       })
-    //       .send({ success: true });
-    //   } catch (err) {
-    //     console.log(err);
-    //   }
-    // });
+    app.get("/logout", async (req, res) => {
+      try {
+        res
+          .clearCookie("token", {
+            maxAge: 0,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+          })
+          .send({ success: true });
+      } catch (err) {
+        console.log(err);
+      }
+    });
 
     app.post("/api/product", async (req, res) => {
       try {
