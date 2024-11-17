@@ -3,15 +3,17 @@ const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const client = require("./config/db");
 require("dotenv").config();
-const port = 2000;
+const port = process.env.PORT;
 
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "https://gadxtreme-906da.web.app",
+      "https://gadxtreme.vercel.app",
       "https://gadxtreme.netlify.app",
     ],
     credentials: true,
@@ -19,14 +21,6 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-
-const client = new MongoClient(process.env.URI, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
 
 const isToken = async (req, res, next) => {
   const token = req?.cookies?.token;
@@ -46,11 +40,11 @@ const isToken = async (req, res, next) => {
 async function run() {
   try {
     // await client.connect();
-    const gadgetsCollection = client.db("gadXtreme").collection("gadgets");
-    const wishlistCollection = client.db("gadXtreme").collection("wishlist");
-    const cartCollection = client.db("gadXtreme").collection("cart");
-    const OrderCollection = client.db("gadXtreme").collection("orders");
-    const couponCollection = client.db("gadXtreme").collection("coupon");
+    const gadgetsCollection = client.db("GadXtreme").collection("gadgets");
+    const wishlistCollection = client.db("GadXtreme").collection("wishlist");
+    const cartCollection = client.db("GadXtreme").collection("cart");
+    const OrderCollection = client.db("GadXtreme").collection("orders");
+    const couponCollection = client.db("GadXtreme").collection("coupon");
 
     const isAdmin = async (req, res, next) => {
       const email = req.decodedUser.email;
@@ -99,7 +93,6 @@ async function run() {
 
     app.post("/api/place-order", async (req, res) => {
       try {
-        console.log(req.body);
         const { email } = req.body;
         const result = await OrderCollection.insertOne(req.body);
         await cartCollection.deleteMany({ author: email });
@@ -112,6 +105,15 @@ async function run() {
     app.post("/api/product", async (req, res) => {
       try {
         const result = await gadgetsCollection.insertOne(req.body);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/api/new-arrival", async (req, res) => {
+      try {
+        const result = await gadgetsCollection.find().limit(6).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
@@ -133,12 +135,31 @@ async function run() {
       }
     });
 
-    app.post("/api/cart", async (req, res) => {
+    app.put("/api/cart", async (req, res) => {
+      const { gadgetId, author, image, name, price, quantity } = req.body;
       try {
-        const result = await cartCollection.insertOne(req.body);
-        res.send(result);
+        const alreadyExist = await cartCollection.findOne({
+          author,
+          gadgetId,
+        });
+
+        if (alreadyExist) {
+          const updatedItem = await cartCollection.updateOne(
+            { author, gadgetId },
+            { $inc: { quantity } }
+          );
+          res.send({
+            success: true,
+            message: "Quantity updated",
+            result: updatedItem,
+          });
+        } else {
+          const newItem = { gadgetId, author, image, name, price, quantity };
+          const result = await cartCollection.insertOne(newItem);
+          res.send({ success: true, message: "Item added to cart", result });
+        }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     });
 
@@ -148,7 +169,7 @@ async function run() {
         const options = { upsert: true };
         const updatedDoc = {
           $set: {
-            quantity: req.body.quantity,
+            quantity: Number(req.body.quantity),
           },
         };
         const result = await cartCollection.updateOne(
