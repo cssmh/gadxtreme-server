@@ -15,7 +15,6 @@ app.use(
       "http://localhost:5173",
       "https://gadxtreme-906da.web.app",
       "https://gadxtreme.vercel.app",
-      "https://gadxtreme.netlify.app",
     ],
     credentials: true,
   })
@@ -51,10 +50,9 @@ async function run() {
     const OrderCollection = client.db("GadXtreme").collection("orders");
     const couponCollection = client.db("GadXtreme").collection("coupon");
 
-    const tran_id = new ObjectId().toString();
     app.post("/payment-gateway", async (req, res) => {
+      const tran_id = new ObjectId().toString();
       const {
-        _id,
         name,
         cartItems,
         email,
@@ -71,7 +69,7 @@ async function run() {
         total_amount: totalAmount,
         currency: "BDT",
         tran_id: tran_id, // use unique tran_id for each api call
-        success_url: "http://localhost:5173/pay-success",
+        success_url: `${process.env.SERVER}/payment/success/${tran_id}`,
         fail_url: "http://localhost:3030/fail",
         cancel_url: "http://localhost:3030/cancel",
         ipn_url: "http://localhost:3030/ipn",
@@ -97,23 +95,52 @@ async function run() {
         ship_postcode: 1000,
         ship_country: "Bangladesh",
       };
+
       const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
-      sslcz.init(data).then((apiResponse) => {
+      sslcz.init(data).then(async (apiResponse) => {
         // Redirect the user to payment gateway
         let GatewayPageURL = apiResponse.GatewayPageURL;
         res.send({ url: GatewayPageURL });
 
-        // const updatedOrderData = {
-        //   transactionId: tran_id,
-        //   payAt: Date.now(),
-        //   payment: "Success",
-        // };
+        const { _id, ...orderData } = req.body;
+        const query = { _id: new ObjectId(_id) };
+        const updateData = {
+          $set: {
+            ...orderData,
+            transactionId: tran_id,
+            createAt: Date.now(),
+            payment: false,
+          },
+        };
 
-        // const query = { _id: new ObjectId(_id) };
-        // const getData = await OrderCollection.findOne(query).
-
+        const result = await OrderCollection.updateOne(query, updateData, { upsert: true });
+        console.log(result);
         console.log("Redirecting to: ", GatewayPageURL);
       });
+    });
+
+    app.post("/payment/success/:tranId", async (req, res) => {
+      try {
+        const { tranId } = req.params;
+        const query = { transactionId: tranId };
+        const updateData = {
+          $set: {
+            payment: true,
+            paidAt: Date.now(),
+          },
+        };
+
+        const result = await OrderCollection.updateOne(query, updateData);
+        if (result.modifiedCount > 0) {
+          console.log(`Payment successful for transaction ID: ${tranId}`);
+          res.redirect(`${process.env.CLIENT}/success/${tranId}`);
+        } else {
+          console.error(`No order found with transaction ID: ${tranId}`);
+          res.status(404).send("Order not found or already updated");
+        }
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     // const isAdmin = async (req, res, next) => {
