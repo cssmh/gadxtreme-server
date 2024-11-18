@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const SSLCommerzPayment = require("sslcommerz-lts");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const { ObjectId } = require("mongodb");
@@ -37,6 +38,10 @@ const isToken = async (req, res, next) => {
   });
 };
 
+const store_id = process.env.STORE_ID;
+const store_passwd = process.env.STORE_PASS;
+const is_live = false; //true for live, false for sandbox
+
 async function run() {
   try {
     // await client.connect();
@@ -46,19 +51,84 @@ async function run() {
     const OrderCollection = client.db("GadXtreme").collection("orders");
     const couponCollection = client.db("GadXtreme").collection("coupon");
 
-    const isAdmin = async (req, res, next) => {
-      const email = req.decodedUser.email;
-      const user = await userCollection.findOne({ email });
+    const tran_id = new ObjectId().toString();
+    app.post("/payment-gateway", async (req, res) => {
+      const {
+        _id,
+        name,
+        cartItems,
+        email,
+        country,
+        district,
+        address,
+        mobileNumber,
+      } = req.body;
+      let totalAmount = 0;
+      cartItems.forEach((item) => {
+        totalAmount += item.price * item.quantity;
+      });
+      const data = {
+        total_amount: totalAmount,
+        currency: "BDT",
+        tran_id: tran_id, // use unique tran_id for each api call
+        success_url: "http://localhost:5173/pay-success",
+        fail_url: "http://localhost:3030/fail",
+        cancel_url: "http://localhost:3030/cancel",
+        ipn_url: "http://localhost:3030/ipn",
+        shipping_method: "Courier",
+        product_name: "Computer.",
+        product_category: "Gadget",
+        product_profile: "general",
+        cus_name: name,
+        cus_email: email,
+        cus_add1: country,
+        cus_add2: "Dhaka",
+        cus_city: district,
+        cus_state: address,
+        cus_postcode: "1000",
+        cus_country: "Bangladesh",
+        cus_phone: mobileNumber,
+        cus_fax: "01711111111",
+        ship_name: "Customer Name",
+        ship_add1: "Dhaka",
+        ship_add2: "Dhaka",
+        ship_city: "Dhaka",
+        ship_state: "Dhaka",
+        ship_postcode: 1000,
+        ship_country: "Bangladesh",
+      };
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+      sslcz.init(data).then((apiResponse) => {
+        // Redirect the user to payment gateway
+        let GatewayPageURL = apiResponse.GatewayPageURL;
+        res.send({ url: GatewayPageURL });
 
-      // if (email === demoAdmin) {
-      //   req.demoAdmin = true;
-      //   return next();
-      // }
-      if (!user || user?.role !== "admin") {
-        return res.status(403).send({ message: "forbidden access" });
-      }
-      next();
-    };
+        // const updatedOrderData = {
+        //   transactionId: tran_id,
+        //   payAt: Date.now(),
+        //   payment: "Success",
+        // };
+
+        // const query = { _id: new ObjectId(_id) };
+        // const getData = await OrderCollection.findOne(query).
+
+        console.log("Redirecting to: ", GatewayPageURL);
+      });
+    });
+
+    // const isAdmin = async (req, res, next) => {
+    //   const email = req.decodedUser.email;
+    //   const user = await userCollection.findOne({ email });
+
+    //   // if (email === demoAdmin) {
+    //   //   req.demoAdmin = true;
+    //   //   return next();
+    //   // }
+    //   if (!user || user?.role !== "admin") {
+    //     return res.status(403).send({ message: "forbidden access" });
+    //   }
+    //   next();
+    // };
 
     app.post("/jwt", async (req, res) => {
       try {
