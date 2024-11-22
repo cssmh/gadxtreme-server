@@ -45,9 +45,10 @@ async function run() {
   try {
     // await client.connect();
     const gadgetsCollection = client.db("GadXtreme").collection("gadgets");
-    const wishlistCollection = client.db("GadXtreme").collection("wishlist");
     const cartCollection = client.db("GadXtreme").collection("cart");
     const OrderCollection = client.db("GadXtreme").collection("orders");
+    const userCollection = client.db("GadXtreme").collection("users");
+    const wishlistCollection = client.db("GadXtreme").collection("wishlist");
     const couponCollection = client.db("GadXtreme").collection("coupon");
 
     app.post("/payment-gateway", async (req, res) => {
@@ -185,6 +186,34 @@ async function run() {
           .send({ success: true });
       } catch (err) {
         console.log(err);
+      }
+    });
+
+    app.get("/api/all-orders", async (req, res) => {
+      try {
+        const result = await OrderCollection.find().toArray();
+        res.send(result)
+      } catch (err) {
+        console.log(err);
+      }
+    });
+
+    app.put("/api/add-user", async (req, res) => {
+      try {
+        const currentUser = req.body;
+        const query = { email: currentUser?.email };
+        const user = await userCollection.findOne(query);
+        const role = user && user.role === "admin" ? "admin" : "guest";
+        const options = { upsert: true };
+        const result = await userCollection.updateOne(
+          query,
+          { $set: { ...currentUser, role } },
+          options
+        );
+
+        res.send(result);
+      } catch (err) {
+        console.error(err);
       }
     });
 
