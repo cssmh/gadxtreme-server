@@ -217,6 +217,23 @@ async function run() {
       }
     });
 
+    app.get("/api/get-role/:email", isToken, async (req, res) => {
+      try {
+        if (req.decodedUser?.email !== req.params?.email) {
+          return res.status(403).send({ message: "Forbidden access" });
+        }
+        const email = req.params.email.toLowerCase();
+        const user = await userCollection.findOne({ email });
+        if (!user) {
+          return res.status(404).send({ message: "user not found" });
+        }
+        const result = user.role;
+        res.send(result);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
     app.post("/api/place-order", async (req, res) => {
       try {
         const { email } = req.body;
