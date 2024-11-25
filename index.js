@@ -234,6 +234,15 @@ async function run() {
       }
     });
 
+    app.get("/api/all-users", async (req, res) => {
+      try {
+        const result = await userCollection.find().toArray()
+        res.send(result);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
     app.post("/api/place-order", async (req, res) => {
       try {
         const { email } = req.body;
