@@ -51,6 +51,15 @@ async function run() {
     const wishlistCollection = client.db("GadXtreme").collection("wishlist");
     const couponCollection = client.db("GadXtreme").collection("coupon");
 
+    const isAdmin = async (req, res, next) => {
+      const email = req.decodedUser.email;
+      const user = await userCollection.findOne({ email });
+      if (!user || user?.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
     app.post("/payment-gateway", async (req, res) => {
       const tran_id = new ObjectId().toString();
       const {
@@ -231,6 +240,20 @@ async function run() {
         res.send(result);
       } catch (err) {
         console.error(err);
+      }
+    });
+
+    app.patch("/api/user-update/:email", isToken, isAdmin, async (req, res) => {
+      try {
+        const email = req.params.email.toLowerCase();
+        const query = { email };
+        const updateDoc = {
+          $set: { role: req.body.role },
+        };
+        const result = await userCollection.updateOne(query, updateDoc);
+        res.send(result);
+      } catch (err) {
+        console.log(err);
       }
     });
 
