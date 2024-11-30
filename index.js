@@ -207,6 +207,15 @@ async function run() {
       }
     });
 
+    app.get("/api/all-carts", async (req, res) => {
+      try {
+        const result = await cartCollection.find().toArray();
+        res.send(result)
+      } catch (err) {
+        console.log(err);
+      }
+    });
+
     app.put("/api/add-user", async (req, res) => {
       try {
         const currentUser = req.body;
