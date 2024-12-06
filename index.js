@@ -54,6 +54,10 @@ async function run() {
     const isAdmin = async (req, res, next) => {
       const email = req.decodedUser.email;
       const user = await userCollection.findOne({ email });
+      // if (email === demoAdmin) {
+      //   req.demoAdmin = true;
+      //   return next();
+      // }
       if (!user || user?.role !== "admin") {
         return res.status(403).send({ message: "forbidden access" });
       }
@@ -118,7 +122,7 @@ async function run() {
           $set: {
             ...orderData,
             transactionId: tran_id,
-            createAt: Date.now(),
+            paidAt: Date.now(),
             payment: false,
           },
         };
@@ -136,7 +140,6 @@ async function run() {
         const updateData = {
           $set: {
             payment: true,
-            paidAt: Date.now(),
           },
         };
 
@@ -152,20 +155,6 @@ async function run() {
         console.log(error);
       }
     });
-
-    // const isAdmin = async (req, res, next) => {
-    //   const email = req.decodedUser.email;
-    //   const user = await userCollection.findOne({ email });
-
-    //   // if (email === demoAdmin) {
-    //   //   req.demoAdmin = true;
-    //   //   return next();
-    //   // }
-    //   if (!user || user?.role !== "admin") {
-    //     return res.status(403).send({ message: "forbidden access" });
-    //   }
-    //   next();
-    // };
 
     app.post("/jwt", async (req, res) => {
       try {
@@ -402,7 +391,7 @@ async function run() {
         if (req.query?.email) {
           query = { email: req.query.email };
         }
-        const result = await OrderCollection.find(query).toArray();
+        const result = await OrderCollection.find(query).sort({ _id: -1 }).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
