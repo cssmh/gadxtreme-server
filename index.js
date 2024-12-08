@@ -492,6 +492,16 @@ async function run() {
       }
     });
 
+    app.get("/api/order/:id", isToken, async (req, res) => {
+      try {
+        const query = { _id: new ObjectId(req.params.id) };
+        const result = await OrderCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
     app.put("/api/product/:id", async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const options = { upsert: true };
