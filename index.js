@@ -264,6 +264,17 @@ async function run() {
       }
     });
 
+    app.get("/api/total-counts", isToken, isAdmin, async (req, res) => {
+      try {
+        const totalOrder = await OrderCollection.countDocuments()
+        const totalUser = await userCollection.countDocuments()
+        const totalProduct = await gadgetsCollection.countDocuments()
+        res.send({ totalOrder, totalUser, totalProduct })
+      } catch (error) {
+        console.log(error);
+      }
+    })
+
     app.post("/api/place-order", async (req, res) => {
       try {
         const { email } = req.body;
