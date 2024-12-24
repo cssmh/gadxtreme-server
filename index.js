@@ -257,7 +257,13 @@ async function run() {
 
     app.get("/api/all-users", async (req, res) => {
       try {
-        const result = await userCollection.find().toArray()
+        const searchTerm = req.query?.search || "";
+        const query = {
+          $or: [
+            { name: { $regex: searchTerm, $options: "i" } },
+          ],
+        };
+        const result = await userCollection.find(query).toArray()
         res.send(result);
       } catch (err) {
         console.error(err);
@@ -473,7 +479,7 @@ async function run() {
           };
         } else if (cate.toLowerCase() === "more") {
           query = {
-            category: { $in: ["More", "Smart TV", "Laptops", "Others"] },
+            category: { $in: ["More", "Smart TV", "Laptop"] },
           };
         } else {
           query = { category: { $regex: new RegExp(`^${cate}$`, "i") } };
