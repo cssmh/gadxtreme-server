@@ -133,6 +133,15 @@ async function run() {
       });
     });
 
+    app.get("/api/best-seller", async (req, res) => {
+      try {
+        const result = await gadgetsCollection.find({ category: "Best Seller" }).toArray()
+        res.send(result)
+      } catch (error) {
+        console.log(error);
+      }
+    })
+
     app.post("/payment/success/:tranId", async (req, res) => {
       try {
         const { tranId } = req.params;
