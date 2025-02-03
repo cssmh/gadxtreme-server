@@ -1,11 +1,39 @@
 const express = require("express");
 const { addJwt, getLogout } = require("../controllers/jwt");
 const { sslPay, successPay } = require("../controllers/payment");
-const { bestSeller, allOrders, allCarts, newArrival, popularGadget, allProducts } = require("../controllers/gadget");
-const { addUser, getRole, userUpdate, allUsers } = require("../controllers/users");
+const {
+  bestSeller,
+  allOrders,
+  allCarts,
+  newArrival,
+  popularGadget,
+  allProducts,
+} = require("../controllers/gadget");
+const {
+  addUser,
+  getRole,
+  userUpdate,
+  allUsers,
+} = require("../controllers/users");
 const { isToken, isAdmin } = require("../middlewares/auth");
-const { placeOrder, addCart, updateCart, deleteCart, myCart, myOrders } = require("../controllers/userCrud");
-const { totalCounts, addGad, searchProduct, categoryProduct, singleGad, singleOrder, updateGad, deleteGad } = require("../controllers/gadAd");
+const {
+  placeOrder,
+  addCart,
+  updateCart,
+  deleteCart,
+  myCart,
+  myOrders,
+} = require("../controllers/userCrud");
+const {
+  totalCounts,
+  addGad,
+  searchProduct,
+  categoryProduct,
+  singleGad,
+  singleOrder,
+  updateGad,
+  deleteGad,
+} = require("../controllers/gadAd");
 
 const router = express.Router();
 
@@ -15,7 +43,7 @@ router.get("/logout", getLogout);
 
 // sslPay
 router.post("/payment-gateway", sslPay);
-router.post("/payment/success/:tranId", successPay);
+router.post("/payment/success/:tranId/:id", successPay);
 
 // gadget
 router.get("/api/new-arrival", newArrival);
