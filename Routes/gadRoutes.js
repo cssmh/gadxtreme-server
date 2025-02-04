@@ -23,6 +23,7 @@ const {
   deleteCart,
   myCart,
   myOrders,
+  myDashboard,
 } = require("../controllers/userCrud");
 const {
   totalCounts,
@@ -60,6 +61,7 @@ router.patch("/api/user-update/:email", isToken, isAdmin, userUpdate);
 router.get("/api/all-users", allUsers);
 
 // user crud
+router.get("/api/my-dashboard", isToken, myDashboard);
 router.get("/api/my-cart", isToken, myCart);
 router.get("/api/my-orders", isToken, myOrders);
 router.post("/api/place-order", placeOrder);

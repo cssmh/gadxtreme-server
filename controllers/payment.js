@@ -21,7 +21,6 @@ const sslPay = async (req, res) => {
       address,
       mobileNumber,
     } = req.body;
-    console.log(req.body);
     let totalAmount = 0;
     cartItems.forEach((item) => {
       totalAmount += item.price * item.quantity;
@@ -31,8 +30,8 @@ const sslPay = async (req, res) => {
       currency: "BDT",
       tran_id: tran_id, // use unique tran_id for each api call
       success_url: `${process.env.SERVER}/payment/success/${tran_id}/${_id}`,
-      fail_url: "http://localhost:3030/fail",
-      cancel_url: "http://localhost:3030/cancel",
+      fail_url: `${process.env.CLIENT}`,
+      cancel_url: `${process.env.CLIENT}/cancel`,
       ipn_url: "http://localhost:3030/ipn",
       shipping_method: "Courier",
       product_name: "Computer.",

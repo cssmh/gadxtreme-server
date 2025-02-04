@@ -3,6 +3,52 @@ const client = require("../config/db");
 const cartCollection = client.db("GadXtreme").collection("cart");
 const OrderCollection = client.db("GadXtreme").collection("orders");
 
+const myDashboard = async (req, res) => {
+  // Check if the user is authorized
+  if (req.decodedUser?.email !== req.query?.email) {
+    return res.status(403).send({ message: "forbidden access" });
+  }
+
+  try {
+    const email = req.query?.email;
+
+    // Query for cart items
+    const cartQuery = { author: email };
+    const cart = await cartCollection.find(cartQuery).toArray();
+    const totalCart = cart.length;
+
+    // Query for orders
+    const orderQuery = { email: email };
+    const orders = await OrderCollection.find(orderQuery).toArray();
+    const totalOrders = orders.length;
+
+    // Calculate total revenue from paid orders
+    const totalRevenueFromPaidOrders = orders
+      .filter((order) => order.payment === true) // Filter paid orders
+      .reduce((sum, order) => sum + parseFloat(order.totalAmount || 0), 0);
+
+    // Calculate total revenue from unpaid cart items
+    const totalRevenueFromUnpaidCart = cart
+      .filter((item) => !item.payment) // Filter unpaid cart items
+      .reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+
+    // Total revenue (sum of revenue from paid orders and unpaid cart items)
+    const totalRevenue =
+      totalRevenueFromPaidOrders + totalRevenueFromUnpaidCart;
+
+    // Send the response
+    res.send({
+      totalCart,
+      totalOrders,
+      totalRevenue: totalRevenue.toFixed(2), // Format to 2 decimal places
+      unpaid: totalRevenueFromUnpaidCart.toFixed(2), // Unpaid amount
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: "Internal server error" });
+  }
+};
+
 const myCart = async (req, res) => {
   if (req.decodedUser?.email !== req.query?.email) {
     return res.status(403).send({ message: "forbidden access" });
@@ -103,6 +149,7 @@ const deleteCart = async (req, res) => {
 };
 
 module.exports = {
+  myDashboard,
   myCart,
   myOrders,
   placeOrder,

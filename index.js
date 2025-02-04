@@ -34,9 +34,9 @@ app.use(router);
 // run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Welcome to GadXtreme e-commerce Server");
+  res.send("Gadxtreme e-commerce Server Running Smoothly");
 });
 
 app.listen(port, () => {
-  console.log(`CRUD IS RUNNING ON PORT ${port}`);
+  console.log(`Xtreme Is Running On http://localhost:${port}`);
 });
