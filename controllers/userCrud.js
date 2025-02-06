@@ -2,17 +2,14 @@ const { ObjectId } = require("mongodb");
 const client = require("../config/db");
 const cartCollection = client.db("GadXtreme").collection("cart");
 const OrderCollection = client.db("GadXtreme").collection("orders");
+const userCollection = client.db("GadXtreme").collection("users");
 
 const myDashboard = async (req, res) => {
-  // Check if the user is authorized
   if (req.decodedUser?.email !== req.query?.email) {
     return res.status(403).send({ message: "forbidden access" });
   }
-
   try {
     const email = req.query?.email;
-
-    // Query for cart items
     const cartQuery = { author: email };
     const cart = await cartCollection.find(cartQuery).toArray();
     const totalCart = cart.length;
@@ -113,9 +110,17 @@ const addCart = async (req, res) => {
         result: updatedItem,
       });
     } else {
-      const newItem = { gadgetId, author, image, name, price, quantity };
+      const newItem = {
+        gadgetId,
+        author,
+        image,
+        name,
+        price,
+        quantity,
+        cartAdded: new Date(),
+      };
       const result = await cartCollection.insertOne(newItem);
-      res.send({ success: true, message: "Item added to cart", result });
+      res.send(result);
     }
   } catch (error) {
     console.error(error);
@@ -124,6 +129,11 @@ const addCart = async (req, res) => {
 
 const updateCart = async (req, res) => {
   const query = { _id: new ObjectId(req.params.id) };
+  const order = await OrderCollection.findOne(query);
+
+  if (order?.email !== req.decodedUser?.email) {
+    return res.status(403).send({ message: "Forbidden access" });
+  }
   try {
     const options = { upsert: true };
     const updatedDoc = {
@@ -140,6 +150,11 @@ const updateCart = async (req, res) => {
 
 const deleteCart = async (req, res) => {
   const query = { _id: new ObjectId(req.params.id) };
+  const cart = await cartCollection.findOne(query);
+  const user = await userCollection.findOne({ email: req.decodedUser?.email });
+  if (cart?.author !== req.decodedUser?.email && user.role !== "admin") {
+    return res.status(403).send({ message: "Forbidden access" });
+  }
   try {
     const result = await cartCollection.deleteOne(query);
     res.send(result);
@@ -151,9 +166,12 @@ const deleteCart = async (req, res) => {
 module.exports = {
   myDashboard,
   myCart,
+  myReview,
+  pendingReview,
   myOrders,
   placeOrder,
   addCart,
   updateCart,
+  addReview,
   deleteCart,
 };

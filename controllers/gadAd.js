@@ -110,8 +110,8 @@ const singleGad = async (req, res) => {
 };
 
 const singleOrder = async (req, res) => {
+  const query = { _id: new ObjectId(req.params.id) };
   try {
-    const query = { _id: new ObjectId(req.params.id) };
     const result = await OrderCollection.findOne(query);
     res.send(result);
   } catch (error) {

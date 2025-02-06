@@ -1,7 +1,5 @@
 const client = require("../config/db");
 const gadgetsCollection = client.db("GadXtreme").collection("gadgets");
-const cartCollection = client.db("GadXtreme").collection("cart");
-const OrderCollection = client.db("GadXtreme").collection("orders");
 
 const newArrival = async (req, res) => {
   try {
@@ -38,24 +36,6 @@ const bestSeller = async (req, res) => {
   }
 };
 
-const allOrders = async (req, res) => {
-  try {
-    const result = await OrderCollection.find().toArray();
-    res.send(result);
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-const allCarts = async (req, res) => {
-  try {
-    const result = await cartCollection.find().toArray();
-    res.send(result);
-  } catch (err) {
-    console.log(err);
-  }
-};
-
 const allProducts = async (req, res) => {
   try {
     const result = await gadgetsCollection.find().toArray();
@@ -65,11 +45,4 @@ const allProducts = async (req, res) => {
   }
 };
 
-module.exports = {
-  newArrival,
-  popularGadget,
-  bestSeller,
-  allOrders,
-  allCarts,
-  allProducts,
-};
+module.exports = { newArrival, popularGadget, bestSeller, allProducts };
