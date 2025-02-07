@@ -2,6 +2,7 @@ const { ObjectId } = require("mongodb");
 const client = require("../config/db");
 const OrderCollection = client.db("GadXtreme").collection("orders");
 const cartCollection = client.db("GadXtreme").collection("cart");
+const couponCollection = client.db("GadXtreme").collection("coupon");
 
 const makeOrderDelivered = async (req, res) => {
   const query = { _id: new ObjectId(req.params.id) };
@@ -36,6 +37,15 @@ const allOrders = async (req, res) => {
 const allCarts = async (req, res) => {
   try {
     const result = await cartCollection.find().toArray();
+    res.send(result);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const addCoupon = async (req, res) => {
+  try {
+    const result = await couponCollection
     res.send(result);
   } catch (err) {
     console.log(err);

@@ -127,6 +127,41 @@ const addCart = async (req, res) => {
   }
 };
 
+const myReview = async (req, res) => {
+  if (req.decodedUser?.email !== req.params?.email) {
+    return res.status(404).send({ message: "Forbidden access" });
+  }
+  const query = {
+    email: req.params?.email,
+    customerReview: { $exists: true },
+  };
+  try {
+    const result = await OrderCollection.find(query).toArray();
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const pendingReview = async (req, res) => {
+  if (req.decodedUser?.email !== req.params?.email) {
+    return res.status(404).send({ message: "Forbidden access" });
+  }
+  try {
+    const query = {
+      status: "Delivered",
+      customerReview: { $exists: false },
+      email: req.params?.email,
+    };
+    const result = await OrderCollection.find(query).toArray();
+    const total = await OrderCollection.countDocuments(query);
+    res.send({ result, total });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const updateCart = async (req, res) => {
   const query = { _id: new ObjectId(req.params.id) };
   const order = await OrderCollection.findOne(query);
@@ -145,6 +180,30 @@ const updateCart = async (req, res) => {
     res.send(result);
   } catch (error) {
     console.log(error);
+  }
+};
+
+const addReview = async (req, res) => {
+  const query = { _id: new ObjectId(req.params.id) };
+  const order = await OrderCollection.findOne(query);
+
+  if (order?.email !== req.decodedUser?.email) {
+    return res.status(403).send({ message: "Forbidden access" });
+  }
+  const { reviewText } = req.body;
+  try {
+    const options = { upsert: true };
+    const updatedDoc = {
+      $set: {
+        customerReview: reviewText,
+        reviewAdded: new Date(),
+      },
+    };
+    const result = await OrderCollection.updateOne(query, updatedDoc, options);
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

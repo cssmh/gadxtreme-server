@@ -111,6 +111,11 @@ const singleGad = async (req, res) => {
 
 const singleOrder = async (req, res) => {
   const query = { _id: new ObjectId(req.params.id) };
+  const order = await OrderCollection.findOne(query);
+  const user = await userCollection.findOne({ email: req.decodedUser?.email });
+  if (order?.email !== req.decodedUser?.email && user.role !== "admin") {
+    return res.status(403).send({ message: "Forbidden access" });
+  }
   try {
     const result = await OrderCollection.findOne(query);
     res.send(result);
