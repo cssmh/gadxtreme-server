@@ -1,6 +1,7 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const client = require("../config/db");
+const demoAdmin = process.env.DEMO_ADMIN;
 const userCollection = client.db("GadXtreme").collection("users");
 
 const isToken = async (req, res, next) => {
@@ -21,10 +22,10 @@ const isToken = async (req, res, next) => {
 const isAdmin = async (req, res, next) => {
   const email = req.decodedUser.email;
   const user = await userCollection.findOne({ email });
-  // if (email === demoAdmin) {
-  //   req.demoAdmin = true;
-  //   return next();
-  // }
+  if (email === demoAdmin) {
+    req.demoAdmin = true;
+    return next();
+  }
   if (!user || user?.role !== "admin") {
     return res.status(403).send({ message: "forbidden access" });
   }

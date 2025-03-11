@@ -3,7 +3,11 @@ const gadgetsCollection = client.db("GadXtreme").collection("gadgets");
 
 const newArrival = async (req, res) => {
   try {
-    const result = await gadgetsCollection.find().limit(6).toArray();
+    const result = await gadgetsCollection
+      .find()
+      .sort({ _id: -1 })
+      .limit(6)
+      .toArray();
     res.send(result);
   } catch (error) {
     console.log(error);
@@ -38,7 +42,11 @@ const bestSeller = async (req, res) => {
 
 const allProducts = async (req, res) => {
   try {
-    const result = await gadgetsCollection.find().toArray();
+    const searchTerm = req.query?.search || "";
+    const query = {
+      $or: [{ productName: { $regex: searchTerm, $options: "i" } }],
+    };
+    const result = await gadgetsCollection.find(query).toArray();
     res.send(result);
   } catch (error) {
     console.log(error);

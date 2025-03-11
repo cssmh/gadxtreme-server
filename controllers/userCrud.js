@@ -13,6 +13,10 @@ const myDashboard = async (req, res) => {
     const cartQuery = { author: email };
     const cart = await cartCollection.find(cartQuery).toArray();
     const totalCart = cart.length;
+    const totalQuantity = cart.reduce(
+      (sum, item) => sum + (item.quantity || 1),
+      0
+    ); // Sum all item quantities
 
     // Query for orders
     const orderQuery = { email: email };
@@ -27,7 +31,10 @@ const myDashboard = async (req, res) => {
     // Calculate total revenue from unpaid cart items
     const totalRevenueFromUnpaidCart = cart
       .filter((item) => !item.payment) // Filter unpaid cart items
-      .reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+      .reduce(
+        (sum, item) => sum + parseFloat(item.price || 0) * (item.quantity || 1),
+        0
+      ); // Price * Quantity
 
     // Total revenue (sum of revenue from paid orders and unpaid cart items)
     const totalRevenue =
@@ -36,6 +43,7 @@ const myDashboard = async (req, res) => {
     // Send the response
     res.send({
       totalCart,
+      totalQuantity, // Add totalQuantity to response
       totalOrders,
       totalRevenue: totalRevenue.toFixed(2), // Format to 2 decimal places
       unpaid: totalRevenueFromUnpaidCart.toFixed(2), // Unpaid amount

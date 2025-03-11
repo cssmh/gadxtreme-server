@@ -76,8 +76,8 @@ const sslPay = async (req, res) => {
       const result = await OrderCollection.updateOne(query, updateData, {
         upsert: true,
       });
-      console.log(result);
-      console.log("Redirecting to: ", GatewayPageURL);
+      // console.log(result);
+      // console.log("Redirecting to: ",GatewayPageURL);
     });
   } catch (error) {
     console.log(error);
