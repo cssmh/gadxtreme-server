@@ -12,6 +12,7 @@ const {
   getRole,
   userUpdate,
   allUsers,
+  deleteUser,
 } = require("../controllers/users");
 const { isToken, isAdmin } = require("../middlewares/auth");
 const {
@@ -65,6 +66,7 @@ router.get("/api/all-products", isToken, isAdmin, allProducts);
 router.put("/api/add-user", addUser);
 router.get("/api/get-role/:email", isToken, getRole);
 router.patch("/api/user-update/:email", isToken, isAdmin, userUpdate);
+router.delete("/user/:id", isToken, isAdmin, deleteUser);
 router.get("/api/all-users", isToken, isAdmin, allUsers);
 
 // user crud

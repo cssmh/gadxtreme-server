@@ -1,3 +1,4 @@
+const { ObjectId } = require("mongodb");
 const client = require("../config/db");
 const userCollection = client.db("GadXtreme").collection("users");
 
@@ -52,6 +53,11 @@ const getRole = async (req, res) => {
 
 const userUpdate = async (req, res) => {
   try {
+    if (req.demoAdmin) {
+      return res
+        .status(402)
+        .send({ message: "You are restricted to read-only actions!" });
+    }
     const email = req.params.email.toLowerCase();
     const query = { email };
     const updateDoc = {
@@ -64,4 +70,4 @@ const userUpdate = async (req, res) => {
   }
 };
 
-module.exports = { allUsers, addUser, getRole, userUpdate };
+module.exports = { allUsers, addUser, getRole, userUpdate, deleteUser };

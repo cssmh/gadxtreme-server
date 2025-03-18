@@ -17,6 +17,11 @@ const totalCounts = async (req, res) => {
 
 const addGad = async (req, res) => {
   try {
+    if (req.demoAdmin) {
+      return res
+        .status(402)
+        .send({ message: "You are restricted to read-only actions." });
+    }
     const result = await gadgetsCollection.insertOne(req.body);
     res.send(result);
   } catch (error) {
@@ -125,6 +130,11 @@ const singleOrder = async (req, res) => {
 };
 
 const updateGad = async (req, res) => {
+    if (req.demoAdmin) {
+      return res
+        .status(402)
+        .send({ message: "You are restricted to read-only actions." });
+    }
   const query = { _id: new ObjectId(req.params.id) };
   const options = { upsert: true };
   const updatedDoc = {
@@ -152,6 +162,11 @@ const updateGad = async (req, res) => {
 };
 
 const deleteGad = async (req, res) => {
+    if (req.demoAdmin) {
+      return res
+        .status(402)
+        .send({ message: "You are restricted to read-only actions." });
+    }
   const query = { _id: new ObjectId(req.params.id) };
   try {
     const result = await gadgetsCollection.deleteOne(query);

@@ -5,6 +5,11 @@ const cartCollection = client.db("GadXtreme").collection("cart");
 const couponCollection = client.db("GadXtreme").collection("coupon");
 
 const makeOrderDelivered = async (req, res) => {
+    if (req.demoAdmin) {
+      return res
+        .status(402)
+        .send({ message: "You are restricted to read-only actions." });
+    }
   const query = { _id: new ObjectId(req.params.id) };
   const update = { $set: { status: "Delivered" } };
   try {
@@ -16,6 +21,11 @@ const makeOrderDelivered = async (req, res) => {
 };
 
 const deleteOrder = async (req, res) => {
+    if (req.demoAdmin) {
+      return res
+        .status(402)
+        .send({ message: "You are restricted to read-only actions." });
+    }
   const query = { _id: new ObjectId(req.params.id) };
   try {
     const result = await OrderCollection.deleteOne(query);
@@ -37,15 +47,6 @@ const allOrders = async (req, res) => {
 const allCarts = async (req, res) => {
   try {
     const result = await cartCollection.find().toArray();
-    res.send(result);
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-const addCoupon = async (req, res) => {
-  try {
-    const result = await couponCollection
     res.send(result);
   } catch (err) {
     console.log(err);

@@ -24,6 +24,8 @@ const isAdmin = async (req, res, next) => {
   const user = await userCollection.findOne({ email });
   if (email === demoAdmin) {
     req.demoAdmin = true;
+  }
+  if (user?.role === "admin") {
     return next();
   }
   if (!user || user?.role !== "admin") {

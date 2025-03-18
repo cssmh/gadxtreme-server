@@ -1,5 +1,6 @@
 const { ObjectId } = require("mongodb");
 const client = require("../config/db");
+const demoAdmin = process.env.DEMO_ADMIN;
 const cartCollection = client.db("GadXtreme").collection("cart");
 const OrderCollection = client.db("GadXtreme").collection("orders");
 const userCollection = client.db("GadXtreme").collection("users");
@@ -219,7 +220,13 @@ const deleteCart = async (req, res) => {
   const query = { _id: new ObjectId(req.params.id) };
   const cart = await cartCollection.findOne(query);
   const user = await userCollection.findOne({ email: req.decodedUser?.email });
-  if (cart?.author !== req.decodedUser?.email && user.role !== "admin") {
+  // Prevent Demo Admin from deleting
+  if (req.decodedUser?.email === demoAdmin) {
+    return res
+      .status(402)
+      .send({ message: "You are restricted to read-only actions." });
+  }
+  if (cart?.author !== req.decodedUser?.email && user?.role !== "admin") {
     return res.status(403).send({ message: "Forbidden access" });
   }
   try {
