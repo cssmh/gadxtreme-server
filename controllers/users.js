@@ -70,4 +70,19 @@ const userUpdate = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    if (req.demoAdmin) {
+      return res
+        .status(402)
+        .send({ message: "You are restricted to read-only actions." });
+    }
+    const query = { _id: new ObjectId(req.params.id) };
+    const result = await userCollection.deleteOne(query);
+    res.send(result);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 module.exports = { allUsers, addUser, getRole, userUpdate, deleteUser };
