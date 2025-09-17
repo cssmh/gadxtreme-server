@@ -20,19 +20,6 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(router);
 
-// async function run() {
-//   try {
-//     const wishlistCollection = client.db("GadXtreme").collection("wishlist");
-//     const couponCollection = client.db("GadXtreme").collection("coupon");
-
-//     await client.db("admin").command({ ping: 1 });
-//     console.log("Pinged your deployment. Successfully connected to MongoDB!");
-//   } finally {
-//     // await client.close();
-//   }
-// }
-// run().catch(console.dir);
-
 app.get("/", (req, res) => {
   res.send("Gadxtreme e-commerce Server Running Smoothly");
 });
